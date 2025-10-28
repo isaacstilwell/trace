@@ -48,4 +48,5 @@ def get_logger():
     """
     Returns the logger for the app
     """
+
     return logging.getLogger("app")

@@ -18,8 +18,13 @@ def get_route(host, hops=50):
         list: List of IP addresses logged to stdout after running traceroute
     """
 
+    # get the traceroute command for the given host
     trace_cmd = _get_traceroute_cmd(host, hops)
+
+    # get the results of the traceroute
     trace_result = _execute_traceroute(trace_cmd)
+
+    # parse IPs from results of traceroute and return
     return _parse_ip_addresses(trace_result)
 
 def _get_traceroute_cmd(host, hops):
@@ -45,10 +50,12 @@ def _execute_traceroute(cmd):
     """
 
     try:
+        # try to run the subprocess
         res = subprocess.run(cmd, capture_output=True, check=True)
         logger.debug(f"[Route._execute_traceroute]: Got {res=} from subprocess")
         return res
     except subprocess.CalledProcessError as e:
+        # catch subprocess errors and log them instead of breaking
         logger.error(f"Traceroute subprocess failed with error {e}")
 
 def _parse_ip_addresses(result: subprocess.CompletedProcess):

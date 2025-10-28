@@ -32,6 +32,11 @@ class IPLocation():
         self._get_geolocation()
 
     async def get_facility(self):
+        """
+        Wrapper function for getting the nearest facility.
+        NOTE: Flow of this is subject to change.
+        """
+
         await self._find_netfac_candidates()
         await self._find_fac_candidates()
         self._compute_nearest_fac()

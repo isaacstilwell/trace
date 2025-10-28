@@ -14,19 +14,14 @@ logger.debug("Logger active!")
 
 app = FastAPI()
 
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
-
-
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: Union[str, None] = None):
-    return {"item_id": item_id, "q": q}
-
 @app.post("/api/traceroute")
 def traceroute(host: str, hops: int):
-    # if host is not a web address does not start with alphas and end with .**[2+], the address
-    # is invalid. NOTE that IP addresses are not supported currently.
+    """
+    Perform a traceroute and return the list of visited IP addresses
+    """
+
+    # if host is not a web address does not start with alphas and end with .[a-zA-Z]{2,}, the address
+    # is invalid. NOTE that IP addresses are not supported (functionality may change).
 
     # TODO: handle this on the frontend.
     if not host or not re.match(r'^[a-zA-Z0-9][a-zA-Z0-9\.-]*\.[a-zA-Z]{2,}$', host):
@@ -39,14 +34,23 @@ def traceroute(host: str, hops: int):
 
 @app.post("/api/getLocations")
 async def get_locations(ip_addresses: list = Body(...)):
+    """
+    Given a list of IP addresses, create complete IP
+    Location objects and return them
+    """
+
+    # create IPLocation instance for each IP address in list
     ip_locations = await asyncio.gather(
         *[IPLocation.create(ip) for ip in ip_addresses]
     )
 
-    # await ip_locations[0].get_facility()
+    # get facilities for each IPLocation object
     await asyncio.gather(
         *[ip_location.get_facility() for ip_location in ip_locations]
     )
+
+    # TODO: make reduce data before returning - maybe write a getter
+    # for the class that returns the frontend facing info only
     return ip_locations
 
 
