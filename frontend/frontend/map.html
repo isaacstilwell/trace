@@ -1,0 +1,28 @@
+<link href="https://cdn.osmbuildings.org/4.1.1/OSMBuildings.css" rel="stylesheet">
+
+<script src="https://cdn.osmbuildings.org/4.1.1/OSMBuildings.js"></script>
+
+
+
+<div id="map"></div>
+
+
+
+<script>
+
+var map = new OSMBuildings({
+	container: 'map',
+	position: { latitude: 52.51836, longitude: 13.40438 },
+	zoom: 16,
+	minZoom: 15,
+	maxZoom: 20,
+	attribution: '© Data <a href="https://openstreetmap.org/copyright/">OpenStreetMap</a> © Map <a href="https://osmbuildings.org/copyright/">OSM Buildings</a>'
+})
+
+
+
+map.addMapTiles('https://tile-a.openstreetmap.fr/hot/{z}/{x}/{y}.png');
+
+map.addGeoJSONTiles('https://{s}.data.osmbuildings.org/0.2/59fcc2e8/tile/{z}/{x}/{y}.json');
+
+</script>
