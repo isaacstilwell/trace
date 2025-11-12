@@ -29,9 +29,37 @@ class IPLocation():
         self._netfac_candidates = None
         self._fac_candidates = None
         self.fac = None
+
+        # cable data if this address is the source of an undersea cable connection
+        self.source_cable_info = None
+
+        # cable data if this address is the destination of an undersea cable connection
+        self.destination_cable_info = None
+
+        # distance from previous node to current node
+        self.distance_to = 0
+
+        # distance from current node to next node
+        self.distance_from = 0
+
         self._get_geolocation()
 
-    async def get_facility(self):
+    def get_frontend_format(self):
+        return {
+            "ip": self.ip,
+            "latitude": self.latitude,
+            "longitude": self.longitude,
+            "city": self.city,
+            "country": self.country_code,
+            "facility": self.fac,
+            "isp": self.isp,
+            "source_cable": self.source_cable_info,
+            "dest_cable": self.destination_cable_info,
+            "distance_to": self.distance_to,
+            "distance_from": self.distance_from,
+        }
+
+    async def find_facility(self):
         """
         Wrapper function for getting the nearest facility.
         NOTE: Flow of this is subject to change.
@@ -121,7 +149,17 @@ class IPLocation():
 
         self.fac = nearest_fac
 
+    def set_source_cable_info(self, cable_id, entry_point):
+        self.source_cable_info = {"id": cable_id, "entry_point": entry_point}
 
+    def set_destination_cable_info(self, cable_id, entry_point):
+        self.destination_cable_info = {"id": cable_id, "entry_point": entry_point}
+
+    def set_distance_to(self, dist):
+        self.distance_to = dist
+
+    def set_distance_from(self, dist):
+        self.distance_from = dist
 
 
 

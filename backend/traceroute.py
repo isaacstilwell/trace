@@ -24,8 +24,14 @@ def get_route(host, hops=50):
     # get the results of the traceroute
     trace_result = _execute_traceroute(trace_cmd)
 
-    # parse IPs from results of traceroute and return
-    return _parse_ip_addresses(trace_result)
+    # parse IPs from results of traceroute
+    ip_addresses = _parse_ip_addresses(trace_result)
+
+    # parse timing info from results of traceroute
+    hang_times = _get_hang_times(trace_result)
+
+    # return ip addresses and timing info
+    return {"ip_addresses": ip_addresses, "time_info": hang_times}
 
 def _get_traceroute_cmd(host, hops):
     """
@@ -42,7 +48,7 @@ def _get_traceroute_cmd(host, hops):
     if (sys.platform == "win32"):
         return ["tracert", "-h", f"{hops}", "-w", "1", host]
     else:
-        return ["traceroute", "-m", f"{hops}", "-q", "1", "-w", "1", host] # TODO: change to sudo tcptraceroute if possible
+        return ["sudo", "tcptraceroute", "-m", f"{hops}", "-q", "1", "-w", "1", host, "443"] # the fix was to modify visudo
 
 def _execute_traceroute(cmd):
     """
@@ -87,3 +93,29 @@ def _parse_ip_addresses(result: subprocess.CompletedProcess):
 
     # return list of IP addresses
     return ip_addresses
+
+def _get_hang_times(result: subprocess.CompletedProcess):
+    # handle the empty stdout case gracefully
+    if (not result.stdout):
+        logger.error(f"No traceroute stdout to parse IP addresses from")
+        return []
+
+    # decode stdout bytes string to normal string
+    trace_output = result.stdout.decode('utf-8')
+
+    hang_time_reg = re.compile(r'(\d+\.?\d*)\s*ms')
+
+    hang_times = [float(x) for x in hang_time_reg.findall(trace_output)]
+
+    longest_difference = float("-inf")
+    for i in range(len(hang_times) - 1):
+        ht_A = hang_times[i]
+        ht_B = hang_times[i + 1]
+
+        diff = ht_B - ht_A
+        if diff > longest_difference:
+            longest_difference = diff
+
+    total_connection_time = hang_times[-1]
+
+    return {"longest_diff": longest_difference, "total_time": total_connection_time}
