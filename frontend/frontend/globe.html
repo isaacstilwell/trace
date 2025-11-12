@@ -1,0 +1,46 @@
+<head>
+  <style> body { margin: 0; } </style>
+
+  <script src="//cdn.jsdelivr.net/npm/globe.gl"></script>
+  <!--<script src="../../dist/globe.gl.js"></script>-->
+</head>
+
+<body>
+<div id="globeViz"></div>
+
+  <script>
+    const globe = new Globe(document.getElementById('globeViz'), {animateIn: false})
+      .globeImageUrl('//cdn.jsdelivr.net/npm/three-globe/example/img/earth-dark.jpg')
+      .bumpImageUrl('//cdn.jsdelivr.net/npm/three-globe/example/img/earth-topology.png')
+      .backgroundImageUrl('//cdn.jsdelivr.net/npm/three-globe/example/img/night-sky.png');
+
+    // from https://www.submarinecablemap.com
+    fetch('./cable-geo-2.json')
+      .then(r => r.json())
+      .then(cablesGeo => {
+        console.log(cablesGeo)
+        let cablePaths = [];
+        cablesGeo.features.forEach(({ geometry, properties }) => {
+          geometry.coordinates.forEach(coords => cablePaths.push({ coords, properties }));
+        });
+
+        globe.pointOfView({lat: 1.925884465105483, lng: 104.11414047991015, altitude: 2.5}, 0)
+
+        globe
+          .pathTransitionDuration(0)
+          .pathsData(cablePaths)
+          .pathPoints('coords')
+          .pathPointLat(p => p[1])
+          .pathPointLng(p => p[0])
+          .pathColor(path => path.properties.color)
+          .pathLabel(path => path.properties.name)
+          .pathDashAnimateTime(120000)
+          .pathDashLength(0.1)
+          .pathDashGap(0.008);
+
+
+
+
+      });
+  </script>
+</body>

@@ -1,38 +1,21 @@
+<html lang="en">
 <head>
-  <style> body { margin: 0; } </style>
-
-  <script src="//cdn.jsdelivr.net/npm/globe.gl"></script>
-  <!--<script src="../../dist/globe.gl.js"></script>-->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.osmbuildings.org/4.1.1/OSMBuildings.js"></script>
+    <title>Traceroute Tool</title>
 </head>
-
-<body>
-<div id="globeViz"></div>
-
-  <script>
-    const globe = new Globe(document.getElementById('globeViz'))
-      .globeImageUrl('//cdn.jsdelivr.net/npm/three-globe/example/img/earth-dark.jpg')
-      .bumpImageUrl('//cdn.jsdelivr.net/npm/three-globe/example/img/earth-topology.png')
-      .backgroundImageUrl('//cdn.jsdelivr.net/npm/three-globe/example/img/night-sky.png');
-
-    // from https://www.submarinecablemap.com
-    fetch('//https://corsproxy.io/?url=https://www.submarinecablemap.com/api/v3/cable/cable-geo.json')
-      .then(r => r.json())
-      .then(cablesGeo => {
-        let cablePaths = [];
-        cablesGeo.features.forEach(({ geometry, properties }) => {
-          geometry.coordinates.forEach(coords => cablePaths.push({ coords, properties }));
-        });
-
-        globe
-          .pathsData(cablePaths)
-          .pathPoints('coords')
-          .pathPointLat(p => p[1])
-          .pathPointLng(p => p[0])
-          .pathColor(path => path.properties.color)
-          .pathLabel(path => path.properties.name)
-          .pathDashLength(0.1)
-          .pathDashGap(0.008)
-          .pathDashAnimateTime(12000);
-      });
-  </script>
+<link href="https://cdn.osmbuildings.org/4.1.1/OSMBuildings.css" rel="stylesheet">
+<body style="display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100vw; height: 100vh;">
+    <div id="input-button-wrapper" style="display: flex; flex-direction: row; align-items: center; justify-content: center;">
+        <input id="ip-input" placeholder="example.com">
+        <button id="start-button">Start</button>
+    </div>
+    <div id="loading-wrapper"></div>
+    <div id="map-container" style="display: none; flex-direction: column; justify-content: center;">
+        <div id="map" style="width: 800px; height: 600px;"></div>
+        <button id="next-button">Next</button>
+    </div>
 </body>
+<script type="module" src="./src/main.ts"></script>
+</html>
