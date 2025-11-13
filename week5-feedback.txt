@@ -1,0 +1,16 @@
+Final Project Checkpoint: 14/14
+10/10 Content
+4/4 Delivery
+
+1.	Work with traceroute and IP location APIs to obtain a list of ping locations for each part of a traceroute. Figure out a deterministic way to use IP locations to find plausible physical locations (like datacenter addresses) for this to work. 
+DONE
+2.	Set up backend to be able to call traceroute (or similar function, since I'm not sure if traceroute can only be run in a terminal) and obtain and parse ip-related information for its results (i.e. longitude, latitude, etc of every IP address in traceroute output) 
+DONE
+3.	Figure out which packages etc. to use to be able to render a map/globe and get a basic map set up. It doesn't need to render the locations or look great, but I need to know that it works. 
+DONE
+
+
+Feedback:
+Very interesting project and good job achieving all the checkpoints. Can you cache geolocation lookups to reduce API calls and latency? Handling failed or missing IP data (as you noted) is the right next step. 
+
+
