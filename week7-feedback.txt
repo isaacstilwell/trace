@@ -1,0 +1,20 @@
+Final Project Checkpoint: 14/14
+10/10 Content
+4/4 Delivery
+
+Week 7 Goals:
+DONE Backend capable of obtaining all necessary location information from traceroute
+DONE Identifies where each redirect was handled (via geolocation + facility lookup)
+DONE Determines ISP/handler for each hop
+DONE Attempts to infer undersea cable usage for overseas hops
+DONE Adds statistics (distance traveled, longest hang time, total connection time)
+DONE Frontend renders hop locations and iterates through them with “Next”
+
+
+
+Notes:
+Ambitious and fantastic project this is one of the most technically involved backends in the class, integrating networking tools, external APIs, geospatial math, and 3D frontend visualization. Your design shows real engineering maturity (modular, async workflows, a pipeline that mirrors real network-diagnostic systems). Extremely impressive scope and depth.
+
+Areas to improve:
+No README or setup instructions. this made the project difficult to run without your personal guidance. Tools like tcptraceroute sudo permissions must be explicitly documented. OS dependent functionality is not addressed since tcptraceroute works on Linux/Mac but not Windows which causes the frontend to show only one hop. The lack of fallback or OS detection is a real reproducibility issue. No installation guide for required Python packages Node/Vite setup steps or environment variables, making the build fragile for new users.
+OPTIONAL you can add summary metrics at the end (total distance traveled, number of datacentres crossed, continents visited), and maybe a playback animation of the route?
