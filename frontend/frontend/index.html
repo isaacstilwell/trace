@@ -1,21 +1,87 @@
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<html lang="en" style="height: 100%; margin: 0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://cdn.osmbuildings.org/4.1.1/OSMBuildings.js"></script>
     <title>Traceroute Tool</title>
-</head>
-<link href="https://cdn.osmbuildings.org/4.1.1/OSMBuildings.css" rel="stylesheet">
-<body style="display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100vw; height: 100vh;">
-    <div id="input-button-wrapper" style="display: flex; flex-direction: row; align-items: center; justify-content: center;">
-        <input id="ip-input" placeholder="example.com">
-        <button id="start-button">Start</button>
+  </head>
+  <link
+    href="https://api.mapbox.com/mapbox-gl-js/v3.17.0-beta.1/mapbox-gl.css"
+    rel="stylesheet"
+  />
+  <link href="./style.css" rel="stylesheet" />
+  <body>
+    <div
+      id="map"
+      style="width: 100%; height: 100%; position: fixed; left: 0; top: 0"
+    ></div>
+    <div id="trace-wrapper" class="wrapper" style="z-index: 1">
+      <input id="trace-input" class="trace-input" placeholder="google.com" />
+      <button id="trace-button" class="button">
+        <!-- <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          width="1em"
+          height="1em"
+        >
+          <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+          <g
+            id="SVGRepo_tracerCarrier"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          ></g>
+          <g id="SVGRepo_iconCarrier">
+            <path
+              fill-rule="evenodd"
+              clip-rule="evenodd"
+              d="M15 10.5C15 12.9853 12.9853 15 10.5 15C8.01472 15 6 12.9853 6 10.5C6 8.01472 8.01472 6 10.5 6C12.9853 6 15 8.01472 15 10.5ZM14.1793 15.2399C13.1632 16.0297 11.8865 16.5 10.5 16.5C7.18629 16.5 4.5 13.8137 4.5 10.5C4.5 7.18629 7.18629 4.5 10.5 4.5C13.8137 4.5 16.5 7.18629 16.5 10.5C16.5 11.8865 16.0297 13.1632 15.2399 14.1792L20.0304 18.9697L18.9697 20.0303L14.1793 15.2399Z"
+              fill="#fff"
+            ></path>
+          </g>
+        </svg> -->
+        <div class="text">Trace</div>
+      </button>
     </div>
-    <div id="loading-wrapper"></div>
-    <div id="map-container" style="display: none; flex-direction: column; justify-content: center;">
-        <div id="map" style="width: 800px; height: 600px;"></div>
-        <button id="next-button">Next</button>
+    <div
+      id="controls-wrapper"
+      class="wrapper"
+      style="display: none; z-index: 1"
+    >
+      <div style="display: flex; flex-direction: column; align-items: center">
+        <div id="loading-wrapper" class="text-box"></div>
+        <div style="display: flex; width: fit-content">
+          <button
+            id="prev-button"
+            class="button"
+            style="padding: 8px; margin: 4px"
+          >
+            <div class="text">Previous</div>
+          </button>
+          <button
+            id="next-button"
+            class="button"
+            style="padding: 8px; margin: 4px"
+          >
+            <div class="text">Next</div>
+          </button>
+        </div>
+      </div>
     </div>
-</body>
-<script type="module" src="./src/main.ts"></script>
+    <div
+      id="static-info"
+      class="text-box"
+      style="
+        position: absolute;
+        top: 35px;
+        left: 35px;
+        z-index: 1;
+        max-width: 300px;
+        font-size: medium;
+        display: none;
+      "
+    >
+  </div>
+  </body>
+  <script type="module" src="./src/main.ts"></script>
 </html>

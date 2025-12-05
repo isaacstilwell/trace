@@ -1,5 +1,4 @@
 import json
-import timeit
 from logging_config import get_logger
 from haversine import haversine
 
@@ -90,39 +89,51 @@ class CableMapper:
         pos_A = (lat_A, lon_A)
         pos_B = (lat_B, lon_B)
 
-        min_avg_dist = float("inf")
-        nearest_cable_id = None
-        nearest_endpoint_A = None
-        nearest_endpoint_B = None
+        # initialize distance tracking variables
+        min_avg_dist = float("inf") # minimum average distance (between the two pings) to the nearest cable
+        nearest_cable_id = None # id of average nearest cable
+        nearest_endpoint_A = None # endpoint of nearest cable nearest to location A
+        nearest_endpoint_B = None # endpoint of nearest cable nearest to location B
 
+        # iterate through all cables
         for id, endpoints in self.cable_map.items():
-            min_distance_A = float("inf")
-            min_endpoint_A = None
-            min_distance_B = float("inf")
-            min_endpoint_B = None
+            # initialize distance tracking variables for this cable
+            min_distance_A = float("inf") # smallest distance between location A and the current cable
+            min_endpoint_A = None # endpoint on cable nearest to location A
+            min_distance_B = float("inf") # smallest distance between location B and the current cable
+            min_endpoint_B = None # endpoint on cable nearest to location B
+
+            # check each endpoint in cable for proximity to locations A and B
             for endpoint in endpoints:
                 endpoint_pos = (endpoint["lat"], endpoint["lon"])
 
+                # compute distances in km from each location to this endpoint
                 distance_A = abs(haversine(pos_A, endpoint_pos))
                 distance_B = abs(haversine(pos_B, endpoint_pos))
 
+                # update nearest endpoint for A if distance is smaller than current min distance to A
                 if distance_A < min_distance_A:
                     min_distance_A = distance_A
                     min_endpoint_A = endpoint
 
+                # update nearest endpoint for B if distance is smaller than current min distance to B
                 if distance_B < min_distance_B:
                     min_distance_B = distance_B
                     min_endpoint_B = endpoint
 
+            # compute average between min distances to this cable
             avg_dist = (min_distance_A + min_distance_B) / 2
 
-            # if the endpoints are the same, the datacenters are not connected by the cable.
+            # if the endpoints are the same, the datacenters are not connected by the cable
+            # if endpoints are different and average distance is smaller, this cable is closer
+            # to locations A and B
             if min_endpoint_B != min_endpoint_A and avg_dist < min_avg_dist:
                 min_avg_dist = avg_dist
                 nearest_cable_id = id
                 nearest_endpoint_A = min_endpoint_A
                 nearest_endpoint_B = min_endpoint_B
 
+        # if the nearest cable is within the tolerance (in km), return info. otherwise, return None
         return {
             "id": nearest_cable_id,
             "endpoint_A": nearest_endpoint_A,

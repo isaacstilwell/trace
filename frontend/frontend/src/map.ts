@@ -1,101 +1,196 @@
-declare const OSMBuildings: any;
+import mapboxgl, { Map, Marker, type MapOptions } from 'mapbox-gl'
+import { CableManager, type SubcableEndpoint } from './cableManager';
 
-const loadingWrapper = document.getElementById('loading-wrapper') as HTMLDivElement;
-const nextButton = document.getElementById('next-button') as HTMLButtonElement;
+interface CableData {
+  id: string;
+  entry_point: {
+    lat: number,
+    lon: number,
+  },
+}
 
-interface Location {
-  ip: string;
+export interface Location {
+  ips: string[];
   latitude: number;
   longitude: number;
   city: string;
   country: string;
-  facility: {
-    latitude: number;
-    longitude: number;
-    name: string;
-    address1: string;
-  } | null;
+  facility: any | null;
   isp: string;
-  source_cable: any;
-  dest_cable: any;
+  source_cable: CableData | null;
+  dest_cable: CableData | null;
+  distance_to: number,
+  distance_from: number,
 }
 
-let locations: Location[] = [];
-let currentLocation = -1;
+class CableMap extends Map {
+  public cableManager?: CableManager;
+  private idling: boolean = true;
+  private secondsPerRev = 180;
+  private idleDPS = 360 / this.secondsPerRev;
+  private locations: Location[] = [];
+  private markers: Marker[] = [];
+  private markedCoords: [number, number][] = [];
+  private currentLocation: number = 0;
 
+  constructor(options: MapOptions) {
+    super(options);
 
-export const showMap = (locOutput: Location[], containerId: string) => {
-  locations = locOutput;
-  const map = initMap(containerId);
-  nextButton.addEventListener('click', () => loadNextLocation(map))
-  loadNextLocation(map);
-}
+    this.on('load', () => {
+      this.rotateIdle();
+      setInterval(this.rotateIdle, 1000);
 
-const loadNextLocation = (map: any) => {
-  currentLocation = (currentLocation + 1) % locations.length;
-  const loc = locations[currentLocation];
-  const hasFac = loc["facility"] !== null;
-  console.log(`location ${currentLocation} has facility? ${hasFac}.`);
-  if (loadingWrapper) {
-    loadingWrapper.innerText = `${currentLocation + 1} / ${locations.length}: ${loc["city"]}, ${loc["country"]}\nIP ${loc["ip"]}\nISP: ${loc["isp"]}`;
+      this.cableManager = new CableManager(this);
+    });
+
+    this.on('style.load', () => {
+      this.setFog({
+        color: 'rgb(186, 210, 235)', // Lower atmosphere
+        'high-color': 'rgb(36, 92, 223)', // Upper atmosphere
+        'horizon-blend': 0.02, // Atmosphere thickness (default 0.2 at low zooms)
+        'space-color': 'rgb(11, 11, 25)', // Background color
+        'star-intensity': 0 // Background star brightness (default 0.35 at low zoooms )
+      });
+    })
   }
-  const lat = hasFac ? loc["facility"]!["latitude"] : loc["latitude"];
-  const lon = hasFac ? loc["facility"]!["longitude"] : loc["longitude"];
-  setMapPosition(map, lat, lon, 16);
-  setMapTilt(map, 45);
-  const marker = addMarker(map, lat, lon);
+
+  rotateIdle = () => {
+    const center = this.getCenter();
+    if (this.idling) {
+      center.lng -= this.idleDPS * 0.75;
+      center.lat += this.idleDPS * 0.25;
+      this.easeTo({center, duration: 1000, easing: (n) => n});
+    }
+  }
+
+  mapLocations = (locations: Location[]) => {
+    this.idling = false;
+    // this.cableManager?.clearFilter();
+    this.setLocations(locations);
+    this.currentLocation = 0;
+    this.moveToLocation(locations[0]);
+
+    return {
+        location: locations[0],
+        index: this.currentLocation,
+        count: this.locations.length,
+      }
+  }
+
+  private setLocations = (locations: Location[]) => {
+    this.locations = locations;
+    for (let m of this.markers) {
+      m.remove();
+    }
+    this.markedCoords = [];
+    this.markers = [];
+  }
+
+  nextLocation = () => {
+    if (this.locations.length > 0) {
+      this.currentLocation = (this.currentLocation + 1) % this.locations.length;
+      const loc = this.locations[this.currentLocation];
+
+      this.showCable(loc);
+      this.moveToLocation(loc);
+
+      return {
+        location: loc,
+        index: this.currentLocation,
+        count: this.locations.length,
+      }
+    }
+  }
+
+  prevLocation = () => {
+    if (this.locations.length > 0) {
+      this.currentLocation = (this.currentLocation - 1) % this.locations.length;
+      const loc = this.locations[this.currentLocation];
+
+      this.showCable(loc);
+      this.moveToLocation(loc);
+
+      return {
+        location: loc,
+        index: this.currentLocation,
+        count: this.locations.length,
+      }
+    }
+  }
+
+  private moveToLocation = (location: Location) => {
+    const [lat, lon] = getLocationLatLon(location);
+    this.addMarker(location);
+
+    this.flyTo({
+      center: [lon, lat],
+      zoom: 16,
+      speed: 1,
+      curve: 3,
+      pitch: 70,
+      easing(t) {
+        return t;
+      }
+    });
+  }
+
+  private addMarker = (location: Location) => {
+    const [lat, lon] = getLocationLatLon(location);
+
+    if (!this.markedCoords.find(([lat1, lon1]) => lat1 === lat && lon1 === lon)) {
+      const marker = new mapboxgl.Marker({
+        color: "#e04c4c",
+      })
+        .setLngLat([lon, lat])
+        .addTo(this);
+
+      console.log(`adding marker ${marker}`);
+
+      this.markers.push(marker);
+      this.markedCoords.push([lat, lon]);
+    }
+  }
+
+  private showCable = (location: Location) => {
+    if (location["dest_cable"] !== null) {
+      const cable = location["dest_cable"];
+      const cableId = location["dest_cable"]["id"];
+      console.log(`appending ${cableId} to map`)
+      const endpoints: SubcableEndpoint[] = [cable.entry_point]
+      const src_cable = this.locations[this.currentLocation - 1]["source_cable"]
+      if (src_cable) {
+        endpoints.push(src_cable.entry_point);
+      }
+      this.cableManager?.addCable(cableId);
+    }
+  }
 }
 
-const initMap = (containerId?: string) => {
-  const map = new OSMBuildings({
-    container: containerId,
-    position: { latitude: 52.51836, longitude: 13.40438 },
-    zoom: 16,
-    minZoom: 15,
-    maxZoom: 20,
-    attribution: '© Data <a href="https://openstreetmap.org/copyright/">OpenStreetMap</a> © Map <a href="https://osmbuildings.org/copyright/">OSM Buildings</a>'
-  })
+const getLocationLatLon = (location: Location) => {
+  const hasFac = location["facility"] !== null;
+  const lat = hasFac ? location["facility"]!["latitude"] : location["latitude"];
+  const lon = hasFac ? location["facility"]!["longitude"] : location["longitude"];
+  return [lat, lon]
+}
 
-  map.addMapTiles('https://tile-a.openstreetmap.fr/hot/{z}/{x}/{y}.png');
-
-  map.addGeoJSONTiles('https://{s}.data.osmbuildings.org/0.2/59fcc2e8/tile/{z}/{x}/{y}.json');
+export const initMap = (containerId: string) => {
+  mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_API_KEY;
+  const map = new CableMap({
+    container: containerId, // container ID
+    style: 'mapbox://styles/mapbox/standard', // style URL
+    config: {
+      basemap: {
+        showPointOfInterestLabels: false,
+        showRoadLabels: false,
+        showTransitLabels: false,
+        theme: "default",
+      }
+    },
+    center: [-74.5, 40],
+    zoom: 1,
+    bearing: 0,
+    pitch: 0,
+  });
 
   return map;
-}
-
-const setMapPosition = (map: any, lat: number, lon: number, zoom: number) => {
-  if (map) {
-    map.setPosition({ latitude: lat, longitude: lon });
-    map.setZoom(zoom);
-    return map
-  }
-}
-
-const setMapTilt = (map: any, tilt: number) => {
-  if (map) {
-    map.setTilt(tilt);
-    return map;
-  }
-}
-
-const addMarker = (map: any, lat: number, lon: number, altitude: number = 100) => {
-  const pos = {latitude: lat, longitude: lon, altitude}
-  const data = {
-    title: "test"
-  };
-
-  const options = {
-    color: ""  // Try hex format
-  };
-  const marker = map.addMarker(pos, data, options);
-
-
-  console.log(marker);
-  return marker
-}
-
-const addBuilding = (map: any, geoJSON: any) => {
-  if (map) {
-    map.addGeoJSON(geoJSON);
-  }
 }

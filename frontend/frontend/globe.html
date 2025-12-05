@@ -15,13 +15,24 @@
       .backgroundImageUrl('//cdn.jsdelivr.net/npm/three-globe/example/img/night-sky.png');
 
     // from https://www.submarinecablemap.com
+
     fetch('./cable-geo-2.json')
       .then(r => r.json())
       .then(cablesGeo => {
         console.log(cablesGeo)
         let cablePaths = [];
+        const colors = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', "#FF8000", "#800080"];
+        let colorIndex = 0;
+
         cablesGeo.features.forEach(({ geometry, properties }) => {
-          geometry.coordinates.forEach(coords => cablePaths.push({ coords, properties }));
+          geometry.coordinates.forEach(coords => {
+            const segmentProperties = {
+              ...properties,
+              color: colors[colorIndex % colors.length]
+            };
+            colorIndex++;
+            cablePaths.push({ coords, properties: segmentProperties });
+          });
         });
 
         globe.pointOfView({lat: 1.925884465105483, lng: 104.11414047991015, altitude: 2.5}, 0)
