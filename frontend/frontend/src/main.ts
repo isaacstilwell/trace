@@ -42,25 +42,6 @@ document.addEventListener("DOMContentLoaded", () => {
     staticInfoDisplay.style.display = "block";
   };
 
-  const testTraceroute = () => {
-    const locInfo = map.mapLocations(fenwickHk);
-    if (locInfo) {
-      const location = locInfo.location;
-      const locIdx = locInfo.index;
-      const totalLen = locInfo.count;
-      const fac = location.facility;
-      const facName = fac ? fac["name"] : "Unavailable";
-      const facOrg = fac && fac["org_name"] ? location.facility["org_name"] : "Unavailable"
-      infoDisplay.innerText = `${locIdx + 1} / ${totalLen}:
-        Location: ${location["city"]}, ${location["country"]}
-        IP(s): ${location["ips"].join(", ")}
-        ISP: ${location["isp"]}
-        Data Facility Name: ${facName}
-        Data Facility Org: ${facOrg}`;
-        return location;
-    }
-  };
-
   const doTraceroute = () => {
     const host = inputField.value;
     const hops = 50;
